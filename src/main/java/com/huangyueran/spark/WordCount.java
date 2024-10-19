@@ -10,10 +10,13 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
 import scala.Tuple2;
+import sun.util.xml.PlatformXmlPropertiesProvider;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author huangyueran
@@ -88,6 +91,12 @@ public class WordCount {
 		for (Tuple2<String, Integer> t : list) {
 			System.out.println(t._1 + "======" + t._2);
 		}
+
+        // null is bootstrap classloader
+		System.out.println("HashMap = " + HashMap.class.getClassLoader());
+        System.out.println("Thread = " + Thread.class.getClassLoader());
+        System.out.println("ThreadPoolExecutor = " + ThreadPoolExecutor.class.getClassLoader());
+        System.out.println("PlatformXmlPropertiesProvider = " + PlatformXmlPropertiesProvider.class.getClassLoader());
 
 		sc.close();
 	}
