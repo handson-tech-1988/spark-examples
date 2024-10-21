@@ -52,8 +52,8 @@ public class JavaKMeansExample {
     KMeansModel model = kmeans.fit(dataset);
 
     // Evaluate clustering by computing Within Set Sum of Squared Errors.
-    double WSSSE = model.computeCost(dataset);
-    System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
+    // double WSSSE = model.computeCost(dataset);
+    // System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
 
     // Shows the result.
     Vector[] centers = model.clusterCenters();

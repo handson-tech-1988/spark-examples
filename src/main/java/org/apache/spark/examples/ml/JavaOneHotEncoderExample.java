@@ -69,7 +69,7 @@ public class JavaOneHotEncoderExample {
       .setInputCol("categoryIndex")
       .setOutputCol("categoryVec");
 
-    Dataset<Row> encoded = encoder.transform(indexed);
+    Dataset<Row> encoded = encoder.fit(indexed).transform(indexed);
     encoded.show();
     // $example off$
 

@@ -5,6 +5,7 @@ import org.apache.spark.Accumulator;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.util.LongAccumulator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +21,7 @@ public class AccumulatorValue {
 		JavaSparkContext sc = SparkUtils.getLocalSparkContext(AccumulatorValue.class);
 
 		// 创建累加器
-		final Accumulator<Integer> accumulator = sc.accumulator(0, "My Accumulator");
+		final LongAccumulator accumulator = sc.sc().longAccumulator("My Accumulator");
 
 		List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 		JavaRDD<Integer> listRDD = sc.parallelize(list);

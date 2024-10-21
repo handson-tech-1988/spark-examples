@@ -10,7 +10,6 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
 import scala.Tuple2;
-import sun.util.xml.PlatformXmlPropertiesProvider;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -96,7 +95,7 @@ public class WordCount {
 		System.out.println("HashMap = " + HashMap.class.getClassLoader());
         System.out.println("Thread = " + Thread.class.getClassLoader());
         System.out.println("ThreadPoolExecutor = " + ThreadPoolExecutor.class.getClassLoader());
-        System.out.println("PlatformXmlPropertiesProvider = " + PlatformXmlPropertiesProvider.class.getClassLoader());
+        // System.out.println("PlatformXmlPropertiesProvider = " + PlatformXmlPropertiesProvider.class.getClassLoader());
 
 		sc.close();
 	}
