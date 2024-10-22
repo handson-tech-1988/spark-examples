@@ -1,7 +1,6 @@
 package com.huangyueran.spark.sharedvariables;
 
 import com.huangyueran.spark.utils.SparkUtils;
-import org.apache.spark.Accumulator;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.VoidFunction;
