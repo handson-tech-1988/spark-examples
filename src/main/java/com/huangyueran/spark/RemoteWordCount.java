@@ -29,16 +29,20 @@ public class RemoteWordCount {
         SparkConf conf = SparkUtils.getRemoteSparkConf(WordCount.class);
         conf.setMaster("spark://chendengliangdeMacBook-Pro.local:7077");
         conf.setAppName("WordCount-Test");
+        conf.setJars(new String[]
+                {
+                        "/Users/chendengliang/Workstation/TechHandson/spark-examples/target/SparkDemo-1.0-SNAPSHOT-jar-with-dependencies.jar"
+                });
         {
             conf.set("spark.driver.host", "127.0.0.1")
-                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+                    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 //                .setJars(new String[] {
 //                        "/Users/caiweili/feature-platform/batch-v2/target/batch-v2-1.0-SNAPSHOT.jar" })
-                .setSparkHome("sparkHome");
+                    .setSparkHome("sparkHome");
         }
         JavaSparkContext sc = new JavaSparkContext(conf);
 
-        JavaRDD<String> text = sc.textFile(Constant.LOCAL_FILE_PREX +"/data/resources/test.txt");
+        JavaRDD<String> text = sc.textFile(Constant.LOCAL_FILE_PREX + "/data/resources/test.txt");
         JavaRDD<String> words = text.flatMap(new FlatMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
 
@@ -48,61 +52,59 @@ public class RemoteWordCount {
             }
         });
 
-//        JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
-//            private static final long serialVersionUID = 1L;
-//
-//            @Override
-//            public Tuple2<String, Integer> call(String word) throws Exception {
-//                return new Tuple2<String, Integer>(word, 1);
-//            }
-//        });
-//
-//        // 统计词出现次数
-//        JavaPairRDD<String, Integer> results = pairs.reduceByKey(new Function2<Integer, Integer, Integer>() {
-//            private static final long serialVersionUID = 1L;
-//
-//            @Override
-//            public Integer call(Integer value1, Integer value2) throws Exception {
-//                return value1 + value2;
-//            }
-//        });
-//
-//        // 键值对互换
-//        JavaPairRDD<Integer, String> temp = results
-//                .mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
-//                    private static final long serialVersionUID = 1L;
-//
-//                    @Override
-//                    public Tuple2<Integer, String> call(Tuple2<String, Integer> tuple) throws Exception {
-//                        return new Tuple2<Integer, String>(tuple._2, tuple._1);
-//                    }
-//                });
+        JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
+            private static final long serialVersionUID = 1L;
 
-//        // 排序
-//        JavaPairRDD<String, Integer> sorted = temp.sortByKey(false)
-//                .mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
-//                    private static final long serialVersionUID = 1L;
-//
-//                    @Override
-//                    public Tuple2<String, Integer> call(Tuple2<Integer, String> tuple) throws Exception {
-//                        return new Tuple2<String, Integer>(tuple._2, tuple._1);
-//                    }
-//                });
-//
+            @Override
+            public Tuple2<String, Integer> call(String word) throws Exception {
+                return new Tuple2<String, Integer>(word, 1);
+            }
+        });
 
-//        sorted.foreach(new VoidFunction<Tuple2<String, Integer>>() {
-//            private static final long serialVersionUID = 1L;
-//
-//            @Override
-//            public void call(Tuple2<String, Integer> tuple) throws Exception {
-//                System.out.println("word:" + tuple._1 + "\tcount:" + tuple._2);
-//            }
-//        });
+        // 统计词出现次数
+        JavaPairRDD<String, Integer> results = pairs.reduceByKey(new Function2<Integer, Integer, Integer>() {
+            private static final long serialVersionUID = 1L;
 
-        List<String> list = words.collect();
-        for (String t : list) {
-            System.out.println(t + " | ===========");
-//            System.out.println(t._1 + "======" + t._2);
+            @Override
+            public Integer call(Integer value1, Integer value2) throws Exception {
+                return value1 + value2;
+            }
+        });
+
+        // 键值对互换
+        JavaPairRDD<Integer, String> temp = results
+                .mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    public Tuple2<Integer, String> call(Tuple2<String, Integer> tuple) throws Exception {
+                        return new Tuple2<Integer, String>(tuple._2, tuple._1);
+                    }
+                });
+
+        // 排序
+        JavaPairRDD<String, Integer> sorted = temp.sortByKey(false)
+                .mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    public Tuple2<String, Integer> call(Tuple2<Integer, String> tuple) throws Exception {
+                        return new Tuple2<String, Integer>(tuple._2, tuple._1);
+                    }
+                });
+
+        sorted.foreach(new VoidFunction<Tuple2<String, Integer>>() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void call(Tuple2<String, Integer> tuple) throws Exception {
+                System.out.println("word:" + tuple._1 + "\tcount:" + tuple._2);
+            }
+        });
+
+        List<Tuple2<String, Integer>> list = sorted.collect();
+        for (Tuple2<String, Integer> tuple : list) {
+            // System.out.println(t + " | ===========");
+            System.out.println("word:" + tuple._1 + "\tcount:" + tuple._2);
         }
 
         // null is bootstrap classloader
