@@ -1,0 +1,219 @@
+== Physical Plan ==
+AdaptiveSparkPlan (17)
++- Project (16)
+   +- Window (15)
+      +- Sort (14)
+         +- Project (13)
+            +- BroadcastHashJoin LeftOuter BuildRight (12)
+               :- Project (4)
+               :  +- Exchange (3)
+               :     +- Project (2)
+               :        +- Scan csv  (1)
+               +- BroadcastExchange (11)
+                  +- HashAggregate (10)
+                     +- HashAggregate (9)
+                        +- Project (8)
+                           +- Exchange (7)
+                              +- Filter (6)
+                                 +- Scan csv  (5)
+
+
+(1) Scan csv 
+Output [3]: [device#18, amount#19, time#21]
+Batched: false
+Location: InMemoryFileIndex [file:/Users/chendengliang/Workstation/feature-platform/batch-v2/target/test-classes/data/spark/distinct_count.csv]
+ReadSchema: struct<device:string,amount:string,time:string>
+
+(2) Project
+Output [3]: [device#18, cast(amount#19 as bigint) AS amount#27L, cast(time#21 as bigint) AS time#34L]
+Input [3]: [device#18, amount#19, time#21]
+
+(3) Exchange
+Input [3]: [device#18, amount#27L, time#34L]
+Arguments: hashpartitioning(device#18, 200), REPARTITION_BY_COL, [plan_id=136]
+
+(4) Project
+Output [4]: [device#18, amount#27L, time#34L, UDF(struct(time, time#34L, amount, amount#27L, time, time#34L)) AS filter_8#48]
+Input [3]: [device#18, amount#27L, time#34L]
+
+(5) Scan csv 
+Output [1]: [device#68]
+Batched: false
+Location: InMemoryFileIndex [file:/Users/chendengliang/Workstation/feature-platform/batch-v2/target/test-classes/data/spark/distinct_count.csv]
+PushedFilters: [IsNotNull(device)]
+ReadSchema: struct<device:string>
+
+(6) Filter
+Input [1]: [device#68]
+Condition : isnotnull(device#68)
+
+(7) Exchange
+Input [1]: [device#68]
+Arguments: hashpartitioning(device#68, 200), REPARTITION_BY_COL, [plan_id=150]
+
+(8) Project
+Output [1]: [device#68 AS device_rename#59]
+Input [1]: [device#68]
+
+(9) HashAggregate
+Input [1]: [device_rename#59]
+Keys [1]: [device_rename#59]
+Functions [1]: [partial_count(device_rename#59)]
+Aggregate Attributes [1]: [count#539L]
+Results [2]: [device_rename#59, count#540L]
+
+(10) HashAggregate
+Input [2]: [device_rename#59, count#540L]
+Keys [1]: [device_rename#59]
+Functions [1]: [count(device_rename#59)]
+Aggregate Attributes [1]: [count(device_rename#59)#62L]
+Results [2]: [device_rename#59, count(device_rename#59)#62L AS device_count#64L]
+
+(11) BroadcastExchange
+Input [2]: [device_rename#59, device_count#64L]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, true]),false), [plan_id=158]
+
+(12) BroadcastHashJoin
+Left keys [1]: [device#18]
+Right keys [1]: [device_rename#59]
+Join type: LeftOuter
+Join condition: None
+
+(13) Project
+Output [6]: [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, CASE WHEN filter_8#48 THEN amount#27L END AS filter_target#90L]
+Input [6]: [device#18, amount#27L, time#34L, filter_8#48, device_rename#59, device_count#64L]
+
+(14) Sort
+Input [6]: [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L]
+Arguments: [device#18 ASC NULLS FIRST, time#34L ASC NULLS FIRST], false, 0
+
+(15) Window
+Input [6]: [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L]
+Arguments: [approx_count_distinct(filter_target#90L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#307L, approx_count_distinct(amount#27L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#531L], [device#18], [time#34L ASC NULLS FIRST]
+
+(16) Project
+Output [9]: [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, _we0#307L AS velocity-8-device-259200000-0-time-amount-distinct count-#202L, _we0#531L AS velocity-9-device-259200000-0-time-amount-distinct count-#426L, UDF(struct(time, time#34L, velocity-8-device-259200000-0-time-amount-distinct count-, _we0#307L)) AS distinctPerDeviceForFuture#550, UDF(struct(time, time#34L, velocity-9-device-259200000-0-time-amount-distinct count-, _we0#531L)) AS distinctPerDeviceForNotFuture#578]
+Input [8]: [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L, _we0#307L, _we0#531L]
+
+(17) AdaptiveSparkPlan
+Output [9]: [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, distinctPerDeviceForNotFuture#578]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, distinctPerDeviceForNotFuture#578]
++- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, argColumn#568, UDF(argColumn#568) AS distinctPerDeviceForNotFuture#578]
+   +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, struct(time, time#34L, velocity-9-device-259200000-0-time-amount-distinct count-, velocity-9-device-259200000-0-time-amount-distinct count-#426L) AS argColumn#568]
+      +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550]
+         +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, argColumn#541, UDF(argColumn#541) AS distinctPerDeviceForFuture#550]
+            +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, struct(time, time#34L, velocity-8-device-259200000-0-time-amount-distinct count-, velocity-8-device-259200000-0-time-amount-distinct count-#202L) AS argColumn#541]
+               +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L]
+                  +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, _we0#531L, coalesce(_we0#531L, cast(null as bigint)) AS velocity-9-device-259200000-0-time-amount-distinct count-#426L]
+                     +- Window [approx_count_distinct(amount#27L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#531L], [device#18], [time#34L ASC NULLS FIRST]
+                        +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                           +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                              +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L, velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                                 +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L, _we0#307L, coalesce(_we0#307L, cast(null as bigint)) AS velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                                    +- Window [approx_count_distinct(filter_target#90L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#307L], [device#18], [time#34L ASC NULLS FIRST]
+                                       +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L]
+                                          +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, CASE WHEN filter_8#48 THEN amount#27L ELSE cast(null as bigint) END AS filter_target#90L]
+                                             +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L]
+                                                +- Join LeftOuter, (device#18 = device_rename#59)
+                                                   :- Project [device#18, amount#27L, time#34L, filter_8#48]
+                                                   :  +- Project [device#18, amount#27L, time#34L, argColumn#43, UDF(argColumn#43) AS filter_8#48]
+                                                   :     +- Project [device#18, amount#27L, time#34L, struct(time, time#34L, amount, amount#27L, time, time#34L) AS argColumn#43]
+                                                   :        +- RepartitionByExpression [device#18]
+                                                   :           +- Project [device#18, amount#27L, time#34L]
+                                                   :              +- Repartition 2, true
+                                                   :                 +- Project [userId#17, device#18, amount#27L, card#20, cast(time#21 as bigint) AS time#34L]
+                                                   :                    +- Project [userId#17, device#18, cast(amount#19 as bigint) AS amount#27L, card#20, time#21]
+                                                   :                       +- Relation [userId#17,device#18,amount#19,card#20,time#21] csv
+                                                   +- Aggregate [device_rename#59], [device_rename#59, count(device_rename#59) AS device_count#64L]
+                                                      +- Project [device#68 AS device_rename#59]
+                                                         +- Project [device#68]
+                                                            +- Project [device#68, amount#27L, time#34L, filter_8#48]
+                                                               +- Project [device#68, amount#27L, time#34L, argColumn#43, UDF(argColumn#43) AS filter_8#48]
+                                                                  +- Project [device#68, amount#27L, time#34L, struct(time, time#34L, amount, amount#27L, time, time#34L) AS argColumn#43]
+                                                                     +- RepartitionByExpression [device#68]
+                                                                        +- Project [device#68, amount#27L, time#34L]
+                                                                           +- Repartition 2, true
+                                                                              +- Project [userId#67, device#68, amount#27L, card#70, cast(time#71 as bigint) AS time#34L]
+                                                                                 +- Project [userId#67, device#68, cast(amount#69 as bigint) AS amount#27L, card#70, time#71]
+                                                                                    +- Relation [userId#67,device#68,amount#69,card#70,time#71] csv
+
+== Analyzed Logical Plan ==
+device: string, amount: bigint, time: bigint, filter_8: boolean, device_count: bigint, velocity-8-device-259200000-0-time-amount-distinct count-: bigint, velocity-9-device-259200000-0-time-amount-distinct count-: bigint, distinctPerDeviceForFuture: int, distinctPerDeviceForNotFuture: int
+Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, distinctPerDeviceForNotFuture#578]
++- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, argColumn#568, UDF(argColumn#568) AS distinctPerDeviceForNotFuture#578]
+   +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550, struct(time, time#34L, velocity-9-device-259200000-0-time-amount-distinct count-, velocity-9-device-259200000-0-time-amount-distinct count-#426L) AS argColumn#568]
+      +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, distinctPerDeviceForFuture#550]
+         +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, argColumn#541, UDF(argColumn#541) AS distinctPerDeviceForFuture#550]
+            +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L, struct(time, time#34L, velocity-8-device-259200000-0-time-amount-distinct count-, velocity-8-device-259200000-0-time-amount-distinct count-#202L) AS argColumn#541]
+               +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, velocity-9-device-259200000-0-time-amount-distinct count-#426L]
+                  +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L, _we0#531L, coalesce(_we0#531L, cast(null as bigint)) AS velocity-9-device-259200000-0-time-amount-distinct count-#426L]
+                     +- Window [approx_count_distinct(amount#27L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#531L], [device#18], [time#34L ASC NULLS FIRST]
+                        +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                           +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                              +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L, velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                                 +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L, _we0#307L, coalesce(_we0#307L, cast(null as bigint)) AS velocity-8-device-259200000-0-time-amount-distinct count-#202L]
+                                    +- Window [approx_count_distinct(filter_target#90L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#307L], [device#18], [time#34L ASC NULLS FIRST]
+                                       +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, filter_target#90L]
+                                          +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, CASE WHEN filter_8#48 THEN amount#27L ELSE cast(null as bigint) END AS filter_target#90L]
+                                             +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L]
+                                                +- Join LeftOuter, (device#18 = device_rename#59)
+                                                   :- Project [device#18, amount#27L, time#34L, filter_8#48]
+                                                   :  +- Project [device#18, amount#27L, time#34L, argColumn#43, UDF(argColumn#43) AS filter_8#48]
+                                                   :     +- Project [device#18, amount#27L, time#34L, struct(time, time#34L, amount, amount#27L, time, time#34L) AS argColumn#43]
+                                                   :        +- RepartitionByExpression [device#18]
+                                                   :           +- Project [device#18, amount#27L, time#34L]
+                                                   :              +- Repartition 2, true
+                                                   :                 +- Project [userId#17, device#18, amount#27L, card#20, cast(time#21 as bigint) AS time#34L]
+                                                   :                    +- Project [userId#17, device#18, cast(amount#19 as bigint) AS amount#27L, card#20, time#21]
+                                                   :                       +- Relation [userId#17,device#18,amount#19,card#20,time#21] csv
+                                                   +- Aggregate [device_rename#59], [device_rename#59, count(device_rename#59) AS device_count#64L]
+                                                      +- Project [device#68 AS device_rename#59]
+                                                         +- Project [device#68]
+                                                            +- Project [device#68, amount#27L, time#34L, filter_8#48]
+                                                               +- Project [device#68, amount#27L, time#34L, argColumn#43, UDF(argColumn#43) AS filter_8#48]
+                                                                  +- Project [device#68, amount#27L, time#34L, struct(time, time#34L, amount, amount#27L, time, time#34L) AS argColumn#43]
+                                                                     +- RepartitionByExpression [device#68]
+                                                                        +- Project [device#68, amount#27L, time#34L]
+                                                                           +- Repartition 2, true
+                                                                              +- Project [userId#67, device#68, amount#27L, card#70, cast(time#71 as bigint) AS time#34L]
+                                                                                 +- Project [userId#67, device#68, cast(amount#69 as bigint) AS amount#27L, card#70, time#71]
+                                                                                    +- Relation [userId#67,device#68,amount#69,card#70,time#71] csv
+
+== Optimized Logical Plan ==
+Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, _we0#307L AS velocity-8-device-259200000-0-time-amount-distinct count-#202L, _we0#531L AS velocity-9-device-259200000-0-time-amount-distinct count-#426L, UDF(struct(time, time#34L, velocity-8-device-259200000-0-time-amount-distinct count-, _we0#307L)) AS distinctPerDeviceForFuture#550, UDF(struct(time, time#34L, velocity-9-device-259200000-0-time-amount-distinct count-, _we0#531L)) AS distinctPerDeviceForNotFuture#578]
++- Window [approx_count_distinct(filter_target#90L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#307L, approx_count_distinct(amount#27L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#531L], [device#18], [time#34L ASC NULLS FIRST]
+   +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, CASE WHEN filter_8#48 THEN amount#27L END AS filter_target#90L]
+      +- Join LeftOuter, (device#18 = device_rename#59)
+         :- Project [device#18, amount#27L, time#34L, UDF(struct(time, time#34L, amount, amount#27L, time, time#34L)) AS filter_8#48]
+         :  +- RepartitionByExpression [device#18]
+         :     +- Project [device#18, cast(amount#19 as bigint) AS amount#27L, cast(time#21 as bigint) AS time#34L]
+         :        +- Relation [userId#17,device#18,amount#19,card#20,time#21] csv
+         +- Aggregate [device_rename#59], [device_rename#59, count(device_rename#59) AS device_count#64L]
+            +- Project [device#68 AS device_rename#59]
+               +- RepartitionByExpression [device#68]
+                  +- Project [device#68]
+                     +- Filter isnotnull(device#68)
+                        +- Relation [userId#67,device#68,amount#69,card#70,time#71] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, _we0#307L AS velocity-8-device-259200000-0-time-amount-distinct count-#202L, _we0#531L AS velocity-9-device-259200000-0-time-amount-distinct count-#426L, UDF(struct(time, time#34L, velocity-8-device-259200000-0-time-amount-distinct count-, _we0#307L)) AS distinctPerDeviceForFuture#550, UDF(struct(time, time#34L, velocity-9-device-259200000-0-time-amount-distinct count-, _we0#531L)) AS distinctPerDeviceForNotFuture#578]
+   +- Window [approx_count_distinct(filter_target#90L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#307L, approx_count_distinct(amount#27L, 0.05, 0, 0) windowspecdefinition(device#18, time#34L ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -259200000, currentrow$())) AS _we0#531L], [device#18], [time#34L ASC NULLS FIRST]
+      +- Sort [device#18 ASC NULLS FIRST, time#34L ASC NULLS FIRST], false, 0
+         +- Project [device#18, amount#27L, time#34L, filter_8#48, device_count#64L, CASE WHEN filter_8#48 THEN amount#27L END AS filter_target#90L]
+            +- BroadcastHashJoin [device#18], [device_rename#59], LeftOuter, BuildRight, false
+               :- Project [device#18, amount#27L, time#34L, UDF(struct(time, time#34L, amount, amount#27L, time, time#34L)) AS filter_8#48]
+               :  +- Exchange hashpartitioning(device#18, 200), REPARTITION_BY_COL, [plan_id=136]
+               :     +- Project [device#18, cast(amount#19 as bigint) AS amount#27L, cast(time#21 as bigint) AS time#34L]
+               :        +- FileScan csv [device#18,amount#19,time#21] Batched: false, DataFilters: [], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/Users/chendengliang/Workstation/feature-platform/batch-v2/target..., PartitionFilters: [], PushedFilters: [], ReadSchema: struct<device:string,amount:string,time:string>
+               +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, string, true]),false), [plan_id=158]
+                  +- HashAggregate(keys=[device_rename#59], functions=[count(device_rename#59)], output=[device_rename#59, device_count#64L])
+                     +- HashAggregate(keys=[device_rename#59], functions=[partial_count(device_rename#59)], output=[device_rename#59, count#540L])
+                        +- Project [device#68 AS device_rename#59]
+                           +- Exchange hashpartitioning(device#68, 200), REPARTITION_BY_COL, [plan_id=150]
+                              +- Filter isnotnull(device#68)
+                                 +- FileScan csv [device#68] Batched: false, DataFilters: [isnotnull(device#68)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/Users/chendengliang/Workstation/feature-platform/batch-v2/target..., PartitionFilters: [], PushedFilters: [IsNotNull(device)], ReadSchema: struct<device:string>

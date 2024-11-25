@@ -1,0 +1,51 @@
+== Physical Plan ==
+AdaptiveSparkPlan (4)
++- Exchange (3)
+   +- Project (2)
+      +- Scan csv  (1)
+
+
+(1) Scan csv 
+Output [3]: [device#18, amount#19, time#21]
+Batched: false
+Location: InMemoryFileIndex [file:/Users/chendengliang/Workstation/feature-platform/batch-v2/target/test-classes/data/spark/distinct_count.csv]
+ReadSchema: struct<device:string,amount:string,time:string>
+
+(2) Project
+Output [3]: [device#18, cast(amount#19 as bigint) AS amount#27L, cast(time#21 as bigint) AS time#34L]
+Input [3]: [device#18, amount#19, time#21]
+
+(3) Exchange
+Input [3]: [device#18, amount#27L, time#34L]
+Arguments: RoundRobinPartitioning(2), REPARTITION_BY_NUM, [plan_id=27]
+
+(4) AdaptiveSparkPlan
+Output [3]: [device#18, amount#27L, time#34L]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+Project [device#18, amount#27L, time#34L]
++- Repartition 2, true
+   +- Project [userId#17, device#18, amount#27L, card#20, cast(time#21 as bigint) AS time#34L]
+      +- Project [userId#17, device#18, cast(amount#19 as bigint) AS amount#27L, card#20, time#21]
+         +- Relation [userId#17,device#18,amount#19,card#20,time#21] csv
+
+== Analyzed Logical Plan ==
+device: string, amount: bigint, time: bigint
+Project [device#18, amount#27L, time#34L]
++- Repartition 2, true
+   +- Project [userId#17, device#18, amount#27L, card#20, cast(time#21 as bigint) AS time#34L]
+      +- Project [userId#17, device#18, cast(amount#19 as bigint) AS amount#27L, card#20, time#21]
+         +- Relation [userId#17,device#18,amount#19,card#20,time#21] csv
+
+== Optimized Logical Plan ==
+Repartition 2, true
++- Project [device#18, cast(amount#19 as bigint) AS amount#27L, cast(time#21 as bigint) AS time#34L]
+   +- Relation [userId#17,device#18,amount#19,card#20,time#21] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Exchange RoundRobinPartitioning(2), REPARTITION_BY_NUM, [plan_id=27]
+   +- Project [device#18, cast(amount#19 as bigint) AS amount#27L, cast(time#21 as bigint) AS time#34L]
+      +- FileScan csv [device#18,amount#19,time#21] Batched: false, DataFilters: [], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/Users/chendengliang/Workstation/feature-platform/batch-v2/target..., PartitionFilters: [], PushedFilters: [], ReadSchema: struct<device:string,amount:string,time:string>
